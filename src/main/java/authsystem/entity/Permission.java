@@ -1,4 +1,4 @@
-package authsystem.model;
+package authsystem.entity;
 
 import lombok.Data;
 import javax.persistence.*;
@@ -6,7 +6,6 @@ import java.util.Set;
 
 @Entity
 @Data
-@Table(name = "permissions")
 public class Permission {
 
     @Id
@@ -15,7 +14,4 @@ public class Permission {
 
     @Column(unique = true, nullable = false)
     private String name;
-
-    @ManyToMany(mappedBy = "permissions")
-    private Set<Role> roles;
 }

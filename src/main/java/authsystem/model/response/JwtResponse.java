@@ -1,4 +1,4 @@
-package authsystem.model;
+package authsystem.model.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

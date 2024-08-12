@@ -1,4 +1,4 @@
-package authsystem.config;
+package authsystem.filter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

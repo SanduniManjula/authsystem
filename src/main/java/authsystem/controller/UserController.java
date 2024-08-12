@@ -1,43 +1,44 @@
 package authsystem.controller;
-import authsystem.model.User;
-import authsystem.repository.UserRepository;
+
+import authsystem.entity.User;
+import authsystem.model.response.ApiResponse;
+import authsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @GetMapping
-    public ResponseEntity<Page<User>> getUsers(Pageable pageable) {
-        return ResponseEntity.ok(userRepository.findAll(pageable));
+    public ResponseEntity<ApiResponse<Page<User>>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Users fetched successfully", userService.getAllUsers(pageable)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        Optional<User> user = userRepository.findById(id);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(user -> ResponseEntity.ok(new ApiResponse<>(true, "User fetched successfully", user)))
+                .orElseGet(() -> ResponseEntity.ok(new ApiResponse<>(false, "User not found", null)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User deleted successfully", null));
     }
 
     @PostMapping("/search")
-    public ResponseEntity<List<User>> searchUsers(@RequestBody Specification<User> spec) {
-        return ResponseEntity.ok(userRepository.findAll((Sort) spec));
+    public ResponseEntity<ApiResponse<List<User>>> searchUsers(@RequestBody Specification<User> spec) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Search results", userService.searchUsers(spec)));
     }
 }

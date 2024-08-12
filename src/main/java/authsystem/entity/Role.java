@@ -1,11 +1,12 @@
-package authsystem.model;
+package authsystem.entity;
 
 import lombok.Data;
+
 import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "roles")
+@Data
 public class Role {
 
     @Id
@@ -23,6 +24,11 @@ public class Role {
     )
     private Set<Permission> permissions;
 
-    @ManyToMany(mappedBy = "roles")
+    /*
+    @ManyToMany(mappedBy = "role")
     private Set<User> users;
+
+     */
+
+
 }
