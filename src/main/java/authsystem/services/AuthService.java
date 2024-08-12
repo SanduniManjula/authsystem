@@ -51,6 +51,7 @@ public class AuthService {
 
         user.setRole(role);
 
+
         userRepository.save(user);
 
         return "User registered successfully";

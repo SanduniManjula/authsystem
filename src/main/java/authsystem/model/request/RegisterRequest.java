@@ -14,6 +14,10 @@ public class RegisterRequest {
 	private String password;
 	private long role_id;
 
+	public long getRole() {
+		return role_id;
+	}
+
 
 //	public String getUsername() {
 //		return username;
