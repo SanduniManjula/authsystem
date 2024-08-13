@@ -1,5 +1,4 @@
 package authsystem.config;
-
 import authsystem.filter.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

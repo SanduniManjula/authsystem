@@ -4,6 +4,7 @@ import authsystem.entity.User;
 import authsystem.model.UserSearchCriteria;
 import authsystem.model.response.ApiResponse;
 import authsystem.services.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
 
     @Autowired
@@ -24,24 +26,25 @@ public class UserController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<User>>> getUsers(Pageable pageable) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Users fetched successfully", userService.getAllUsers(pageable)));
-    }
 
+    }
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<User>> getUser(@PathVariable Long id) {
         return userService.getUserById(id)
                 .map(user -> ResponseEntity.ok(new ApiResponse<>(true, "User fetched successfully", user)))
                 .orElseGet(() -> ResponseEntity.ok(new ApiResponse<>(false, "User not found", null)));
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "User deleted successfully", null));
     }
-
+/*
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<Page<User>>> searchUsers(@ModelAttribute UserSearchCriteria searchCriteria) {
         Pageable pageable = searchCriteria.toPageable();
         return ResponseEntity.ok(new ApiResponse<>(true, "Search results", userService.searchUsers(searchCriteria, pageable)));
     }
+
+ */
 }

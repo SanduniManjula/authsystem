@@ -56,7 +56,6 @@ public class AuthService {
         user.setRole(role);
 
      */
-
         userRepository.save(user);
 
        /* Authentication authentication = authenticationManager.authenticate(
@@ -67,10 +66,6 @@ public class AuthService {
         */
         return jwtTokenProvider.generateToken(request.getUsername(), roleId);
     }
-
-
-
-
     public String login(String username, String password) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
@@ -78,8 +73,4 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return jwtTokenProvider.generateToken(authentication);
     }
-
-
-
-
 }

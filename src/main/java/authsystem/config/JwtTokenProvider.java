@@ -31,7 +31,6 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
@@ -40,7 +39,6 @@ public class JwtTokenProvider {
             return false;
         }
     }
-
 
     public Collection<? extends GrantedAuthority> getAuthorities(String token) {
         Claims claims = Jwts.parser()
@@ -51,12 +49,10 @@ public class JwtTokenProvider {
 
         Integer roleId = claims.get("role_id", Integer.class);
 
-
         return roleId != null ?
                 List.of(new SimpleGrantedAuthority("ROLE_" + roleId)) :
                 List.of();
     }
-
 /*
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
@@ -72,8 +68,6 @@ public class JwtTokenProvider {
                     }
                 })
                 .orElseThrow(() -> new RuntimeException("User has no roles assigned"));
-
-
 
         return Jwts.builder()
                 .setSubject(username)
@@ -106,6 +100,5 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS384, jwtSecret)
                 .compact();
     }
-
 
 }

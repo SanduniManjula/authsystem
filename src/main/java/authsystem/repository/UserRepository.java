@@ -12,13 +12,18 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	//Object findByUsername(String username);
     boolean existsByUsername(String username);
 
     User findByUsername(String username);
-
+/*
     @Query("SELECT u FROM User u JOIN u.role r WHERE " +
             "(:search IS NULL OR u.username LIKE %:search% OR r.name LIKE %:search%)")
-    Page<User> findByCriteria(@Param("search") String search, Pageable pageable);
 
+ */
+
+
+    @Query("SELECT u FROM User u LEFT JOIN u.role r WHERE " +
+            "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<User> findByCriteria(@Param("keyword") String keyword, Pageable pageable);
 }
