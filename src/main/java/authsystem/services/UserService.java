@@ -1,6 +1,7 @@
 package authsystem.services;
 
 import authsystem.entity.User;
+import authsystem.model.UserSearchCriteria;
 import authsystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,5 +33,10 @@ public class UserService {
 
     public List<User> searchUsers(Specification<User> spec) {
         return userRepository.findAll((Sort) spec);
+    }
+
+
+    public Page<User> searchUsers(UserSearchCriteria searchCriteria, Pageable pageable) {
+        return userRepository.findByCriteria(searchCriteria.getSearch(), pageable);
     }
 }

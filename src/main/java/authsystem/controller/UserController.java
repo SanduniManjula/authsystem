@@ -1,17 +1,19 @@
 package authsystem.controller;
 
 import authsystem.entity.User;
+import authsystem.model.UserSearchCriteria;
 import authsystem.model.response.ApiResponse;
 import authsystem.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -38,7 +40,8 @@ public class UserController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<ApiResponse<List<User>>> searchUsers(@RequestBody Specification<User> spec) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Search results", userService.searchUsers(spec)));
+    public ResponseEntity<ApiResponse<Page<User>>> searchUsers(@ModelAttribute UserSearchCriteria searchCriteria) {
+        Pageable pageable = searchCriteria.toPageable();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Search results", userService.searchUsers(searchCriteria, pageable)));
     }
 }

@@ -31,6 +31,7 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
+
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
@@ -40,11 +41,13 @@ public class JwtTokenProvider {
         }
     }
 
+
     public Collection<? extends GrantedAuthority> getAuthorities(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(jwtSecret)
                 .parseClaimsJws(token)
                 .getBody();
+
 
         Integer roleId = claims.get("role_id", Integer.class);
 
@@ -54,14 +57,23 @@ public class JwtTokenProvider {
                 List.of();
     }
 
+/*
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
 
 
         Integer roleId = authentication.getAuthorities().stream()
                 .findFirst()
-                .map(auth -> Integer.parseInt(auth.getAuthority().replace("ROLE_", "")))
+                .map(auth -> {
+                    try {
+                        return Integer.parseInt(auth.getAuthority().replace("ROLE_", ""));
+                    } catch (NumberFormatException e) {
+                        throw new RuntimeException("Invalid role format in authority: " + auth.getAuthority());
+                    }
+                })
                 .orElseThrow(() -> new RuntimeException("User has no roles assigned"));
+
+
 
         return Jwts.builder()
                 .setSubject(username)
@@ -71,4 +83,29 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
+
+ */
+    public String generateToken(String username, long roleId) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("role", roleId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(new Date().getTime() + jwtExpirationInMs))
+                .signWith(SignatureAlgorithm.HS384, jwtSecret)
+                .compact();
+    }
+
+    public String generateToken(Authentication authentication) {
+        String username = authentication.getName();
+
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(new Date().getTime() + jwtExpirationInMs))
+                .signWith(SignatureAlgorithm.HS384, jwtSecret)
+                .compact();
+    }
+
+
 }

@@ -1,5 +1,4 @@
 package authsystem.services;
-
 import authsystem.config.JwtTokenProvider;
 import authsystem.entity.Role;
 import authsystem.entity.User;
@@ -45,17 +44,32 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
+        long roleId = request.getRole();
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        user.setRole(role);
 
+    /*
         Role role = roleRepository.findById(Long.valueOf(request.getRole()))
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
         user.setRole(role);
 
+     */
 
         userRepository.save(user);
 
-        return "User registered successfully";
+       /* Authentication authentication = authenticationManager.authenticate(
+               new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+       );
+       SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        */
+        return jwtTokenProvider.generateToken(request.getUsername(), roleId);
     }
+
+
+
 
     public String login(String username, String password) {
         Authentication authentication = authenticationManager.authenticate(
@@ -64,4 +78,8 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return jwtTokenProvider.generateToken(authentication);
     }
+
+
+
+
 }

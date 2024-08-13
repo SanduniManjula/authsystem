@@ -24,4 +24,6 @@ public class AuthController {
         String jwt = authService.login(request.getUsername(), request.getPassword());
         return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", jwt));
     }
+
+
 }
