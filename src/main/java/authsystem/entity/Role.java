@@ -3,6 +3,7 @@ package authsystem.entity;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -21,14 +22,12 @@ public class Role {
             name = "role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
+            //joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
+           // inverseJoinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id")
+
     )
-    private Set<Permission> permissions;
+    private Set<Permission> permissions = new HashSet<>();
 
-    /*
-    @ManyToMany(mappedBy = "role")
-    private Set<User> users;
-
-     */
 
 
 }

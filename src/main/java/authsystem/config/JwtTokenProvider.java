@@ -53,32 +53,6 @@ public class JwtTokenProvider {
                 List.of(new SimpleGrantedAuthority("ROLE_" + roleId)) :
                 List.of();
     }
-/*
-    public String generateToken(Authentication authentication) {
-        String username = authentication.getName();
-
-
-        Integer roleId = authentication.getAuthorities().stream()
-                .findFirst()
-                .map(auth -> {
-                    try {
-                        return Integer.parseInt(auth.getAuthority().replace("ROLE_", ""));
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeException("Invalid role format in authority: " + auth.getAuthority());
-                    }
-                })
-                .orElseThrow(() -> new RuntimeException("User has no roles assigned"));
-
-        return Jwts.builder()
-                .setSubject(username)
-                .claim("role_id", roleId)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime() + jwtExpirationInMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
-                .compact();
-    }
-
- */
     public String generateToken(String username, long roleId) {
         return Jwts.builder()
                 .setSubject(username)

@@ -19,7 +19,7 @@ public class RoleController {
     public ResponseEntity<ApiResponse<List<Role>>> getRoles() {
         return ResponseEntity.ok(new ApiResponse<>(true, "Roles fetched successfully", roleService.getAllRoles()));
     }
-
+    /*
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Role>> getRole(@PathVariable Long id) {
         Optional<Role> role = roleService.getRoleById(id);
@@ -37,4 +37,6 @@ public class RoleController {
         roleService.deleteRole(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Role deleted successfully", null));
     }
+
+     */
 }

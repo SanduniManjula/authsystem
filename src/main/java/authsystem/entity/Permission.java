@@ -1,6 +1,7 @@
 package authsystem.entity;
 import lombok.Data;
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -13,4 +14,6 @@ public class Permission {
 
     @Column(unique = true, nullable = false)
     private String name;
+
+
 }
