@@ -1,5 +1,4 @@
 package authsystem.services;
-
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.Role;
 import authsystem.entity.User;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -29,8 +29,8 @@ public class DualAuthSystemService {
 
     public UserDto createPendingUser(User user, Long creatorId) {
         log.info("Creating pending user: {} with creatorId: {}", user.getUsername(), creatorId);
-        String newUserJson = convertToJson(user);
 
+        String newUserJson = convertToJson(user);
 
         DualAuthSystem dualAuthSystem = new DualAuthSystem();
         dualAuthSystem.setEntity("User");
@@ -42,6 +42,24 @@ public class DualAuthSystemService {
         dualAuthSystemRepository.save(dualAuthSystem);
 
         return new UserDto(user.getId(), user.getUsername(), user.getRole().getId());
+    }
+
+    public UserDto updateUser(Long id, User updatedUser, Long creatorId) {
+        Optional<User> existingUserOpt = userRepository.findById(id);
+
+        User existingUser = existingUserOpt.get();
+        String oldUserJson = convertToJson(existingUser);
+        String newUserJson = convertToJson(updatedUser);
+
+        DualAuthSystem dualAuthSystem = new DualAuthSystem();
+        dualAuthSystem.setEntity("User");
+        dualAuthSystem.setOldData(oldUserJson);
+        dualAuthSystem.setNewData(newUserJson);
+        dualAuthSystem.setCreatedBy(creatorId);
+        dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+        dualAuthSystemRepository.save(dualAuthSystem);
+
+        return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
     }
 
     public boolean approveUser(Long id, Long reviewerId) {
@@ -65,6 +83,36 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
+    /*
+    public boolean deleteUser(Long userId, Long creatorId) {
+        return userRepository.findById(userId).map(user -> {
+            String oldUserData = convertToJson(user);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("User");
+            dualAuthSystem.setOldData(oldUserData);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean approveUserDeletion(Long id, Long reviewerId) {
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            userRepository.deleteById(user.getId());
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+            return true;
+        }).orElse(false);
+    }
+
+     */
 
     private String convertToJson(Object object) {
         try {

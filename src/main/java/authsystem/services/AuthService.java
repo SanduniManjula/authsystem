@@ -49,21 +49,7 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Role not found"));
         user.setRole(role);
 
-    /*
-        Role role = roleRepository.findById(Long.valueOf(request.getRole()))
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-
-        user.setRole(role);
-
-     */
         userRepository.save(user);
-
-       /* Authentication authentication = authenticationManager.authenticate(
-               new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-       );
-       SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        */
         return jwtTokenProvider.generateToken(request.getUsername(), roleId);
     }
     public String login(String username, String password) {

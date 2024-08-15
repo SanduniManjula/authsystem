@@ -1,5 +1,4 @@
 package authsystem.controller;
-
 import authsystem.entity.User;
 import authsystem.model.UserDto;
 import authsystem.model.UserSearchCriteria;
@@ -40,14 +39,7 @@ public class UserController {
         Pageable pageable = searchCriteria.toPageable();
         return ResponseEntity.ok(new ApiResponse<>(true, "Search results", userService.searchUsers(searchCriteria, pageable)));
     }
-    /*
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<String>> createUser(@RequestBody User user, @RequestParam Long creatorId) {
-        dualAuthSystemService.createPendingUser(user, creatorId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "User created and pending approval", null));
-    }
 
-     */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<UserDto>> createUser(@RequestBody User user, @RequestParam Long creatorId) {
         UserDto createdUser = dualAuthSystemService.createPendingUser(user, creatorId);
@@ -66,5 +58,27 @@ public class UserController {
         return result ? ResponseEntity.ok(new ApiResponse<>(true, "User rejected", null)) :
                 ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
     }
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody User updatedUser, @RequestParam Long creatorId) {
+        UserDto updatedUserDto = dualAuthSystemService.updateUser(id, updatedUser, creatorId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User updated and pending approval", updatedUserDto));
+    }
+    /*
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id, @RequestParam Long creatorId) {
+        boolean isDeleted = dualAuthSystemService.deleteUser(id, creatorId);
+        if (isDeleted) {
+            return ResponseEntity.ok(new ApiResponse<>(true, "User deletion pending approval", null));
+        } else {
+            return ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
+        }
+    }
+    @PostMapping("/approveDeletion/{id}")
+    public ResponseEntity<ApiResponse<String>> approveUserDeletion(@PathVariable Long id, @RequestParam Long reviewerId) {
+        boolean result = dualAuthSystemService.approveUserDeletion(id, reviewerId);
+        return result ? ResponseEntity.ok(new ApiResponse<>(true, "User deletion approved", null)) :
+                ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
+    }
 
+     */
 }

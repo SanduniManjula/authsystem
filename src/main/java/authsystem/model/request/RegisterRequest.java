@@ -17,25 +17,5 @@ public class RegisterRequest {
 	public long getRole() {
 		return role_id;
 	}
-
-
-//	public String getUsername() {
-//		return username;
-//	}
-//
-//
-//	public String getPassword() {
-//		return password;
-//	}
-//
-//
-//	public long getRole() {
-//		return role_id;
-//	}
-
-	/*public void setRoles(Set<String> roles) {
-		this.roles = roles;
-
-	 */
 	}
 
