@@ -34,7 +34,7 @@ public class DualAuthSystem {
 
    // private LocalDateTime createdAt;
 
-   // private LocalDateTime updatedAt;
+    // private LocalDateTime updatedAt;
 
     public enum Status {
         PENDING,
