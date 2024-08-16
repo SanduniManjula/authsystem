@@ -13,8 +13,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
+    Optional<User> findByUsername(String username);
 
-    User findByUsername(String username);
+     //User findByUsername(String username);
 /*
     @Query("SELECT u FROM User u JOIN u.role r WHERE " +
             "(:search IS NULL OR u.username LIKE %:search% OR r.name LIKE %:search%)")

@@ -1,6 +1,4 @@
 package authsystem.repository;
-
-
 import authsystem.entity.DualAuthSystem;
 import org.springframework.data.jpa.repository.JpaRepository;
 

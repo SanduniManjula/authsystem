@@ -8,9 +8,11 @@ import authsystem.repository.RoleRepository;
 import authsystem.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -25,9 +27,13 @@ public class DualAuthSystemService {
     private UserRepository userRepository;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
-    public UserDto createPendingUser(User user, Long creatorId) {
+    public UserDto createPendingUser(User user) {
+        Long creatorId = getCurrentUserId();
         log.info("Creating pending user: {} with creatorId: {}", user.getUsername(), creatorId);
 
         String newUserJson = convertToJson(user);
@@ -44,7 +50,30 @@ public class DualAuthSystemService {
         return new UserDto(user.getId(), user.getUsername(), user.getRole().getId());
     }
 
-    public UserDto updateUser(Long id, User updatedUser, Long creatorId) {
+
+    private Long getCurrentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String username;
+        if (principal instanceof UserDetails) {
+
+            username = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+
+            username = (String) principal;
+        } else {
+            throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("User not found for username: " + username));
+
+        return user.getId();
+    }
+
+
+    public UserDto updateUser(Long id, User updatedUser) {
+        Long creatorId = getCurrentUserId();
         Optional<User> existingUserOpt = userRepository.findById(id);
 
         User existingUser = existingUserOpt.get();
@@ -62,11 +91,13 @@ public class DualAuthSystemService {
         return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
     }
 
-    public boolean approveUser(Long id, Long reviewerId) {
+    public boolean approveUser(Long id) {
+        Long reviewerId= getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.APPROVED);
     }
 
-    public boolean rejectUser(Long id, Long reviewerId) {
+    public boolean rejectUser(Long id) {
+        Long reviewerId=getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.REJECTED);
     }
 
@@ -74,6 +105,8 @@ public class DualAuthSystemService {
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
             if (status == DualAuthSystem.Status.APPROVED) {
                 User user = convertFromJson(dualAuthSystem.getNewData(), User.class);
+                String encryptedPassword = passwordEncoder.encode(user.getPassword());
+                user.setPassword(encryptedPassword);
                 userRepository.save(user);
             }
             dualAuthSystem.setStatus(status);
@@ -83,8 +116,9 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-    /*
-    public boolean deleteUser(Long userId, Long creatorId) {
+
+    public boolean deleteUser(Long userId) {
+        Long creatorId = getCurrentUserId();
         return userRepository.findById(userId).map(user -> {
             String oldUserData = convertToJson(user);
 
@@ -101,7 +135,8 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    public boolean approveUserDeletion(Long id, Long reviewerId) {
+    public boolean approveUserDeletion(Long id) {
+        Long reviewerId= getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
             User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
             userRepository.deleteById(user.getId());
@@ -111,7 +146,7 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-     */
+
 
     private String convertToJson(Object object) {
         try {

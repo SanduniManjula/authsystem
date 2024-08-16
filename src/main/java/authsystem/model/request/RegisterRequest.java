@@ -17,5 +17,6 @@ public class RegisterRequest {
 	public long getRole() {
 		return role_id;
 	}
-	}
+
+}
 

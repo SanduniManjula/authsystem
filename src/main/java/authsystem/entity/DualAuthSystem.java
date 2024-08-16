@@ -32,7 +32,7 @@ public class DualAuthSystem {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-   // private LocalDateTime createdAt;
+    // private LocalDateTime createdAt;
 
     // private LocalDateTime updatedAt;
 
