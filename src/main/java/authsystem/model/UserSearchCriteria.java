@@ -11,7 +11,6 @@ public class UserSearchCriteria {
     private Sort.Direction sortDirection = Sort.Direction.ASC;
     private String sortBy = "id";
 
-
     public String getSearch() {
         return search;
     }

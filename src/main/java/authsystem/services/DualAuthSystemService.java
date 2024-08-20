@@ -1,10 +1,8 @@
 package authsystem.services;
 import authsystem.entity.DualAuthSystem;
-import authsystem.entity.Role;
 import authsystem.entity.User;
 import authsystem.model.UserDto;
 import authsystem.repository.DualAuthSystemRepository;
-import authsystem.repository.RoleRepository;
 import authsystem.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
