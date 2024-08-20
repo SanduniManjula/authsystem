@@ -32,6 +32,9 @@ public class DualAuthSystem {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Enumerated(EnumType.STRING)
+    private Action action;
+
     // private LocalDateTime createdAt;
 
     // private LocalDateTime updatedAt;
@@ -40,5 +43,10 @@ public class DualAuthSystem {
         PENDING,
         APPROVED,
         REJECTED
+    }
+    public enum Action {
+        CREATE,
+        UPDATE,
+        DELETE
     }
 }

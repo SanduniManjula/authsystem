@@ -43,7 +43,9 @@ public class DualAuthSystemService {
         dualAuthSystem.setNewData(newUserJson);
         dualAuthSystem.setCreatedBy(creatorId);
         dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
-      //  dualAuthSystem.setCreatedAt(LocalDateTime.now());
+        dualAuthSystem.setAction(DualAuthSystem.Action.CREATE);
+
+        //  dualAuthSystem.setCreatedAt(LocalDateTime.now());
 
         dualAuthSystemRepository.save(dualAuthSystem);
 
@@ -86,6 +88,8 @@ public class DualAuthSystemService {
         dualAuthSystem.setNewData(newUserJson);
         dualAuthSystem.setCreatedBy(creatorId);
         dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+        dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
+
         dualAuthSystemRepository.save(dualAuthSystem);
 
         return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
@@ -127,9 +131,9 @@ public class DualAuthSystemService {
             dualAuthSystem.setOldData(oldUserData);
             dualAuthSystem.setCreatedBy(creatorId);
             dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.DELETE);
 
             dualAuthSystemRepository.save(dualAuthSystem);
-
 
             return true;
         }).orElse(false);
@@ -141,6 +145,16 @@ public class DualAuthSystemService {
             User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
             userRepository.deleteById(user.getId());
             dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean rejectUserDeletion(Long id) {
+        Long reviewerId=getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            dualAuthSystem.setStatus(DualAuthSystem.Status.REJECTED);
             dualAuthSystem.setReviewedBy(reviewerId);
             dualAuthSystemRepository.save(dualAuthSystem);
             return true;

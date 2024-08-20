@@ -84,6 +84,13 @@ public class UserController {
         return result ? ResponseEntity.ok(new ApiResponse<>(true, "User deletion approved", null)) :
                 ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
     }
+
+    @PostMapping("/rejectDeletion/{id}")
+    public ResponseEntity<ApiResponse<String>> rejectUserDeletion(@PathVariable Long id) {
+        boolean result = dualAuthSystemService.rejectUserDeletion(id);
+        return result ? ResponseEntity.ok(new ApiResponse<>(true, "User deletion rejected", null)) :
+                ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
+    }
      
 }
  
