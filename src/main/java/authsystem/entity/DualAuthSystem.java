@@ -47,6 +47,6 @@ public class DualAuthSystem {
     public enum Action {
         CREATE,
         UPDATE,
-        DELETE
+        ACTIVATE, DEACTIVATE, DELETE
     }
 }

@@ -33,7 +33,6 @@ public class User implements UserDetails {
     private Role role;
 
 
-
     @Override
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -72,4 +71,12 @@ public class User implements UserDetails {
         return true;
     }
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+
+    public enum Status {
+        ACTIVATED,
+        DEACTIVATED
+    }
 }

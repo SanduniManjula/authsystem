@@ -87,14 +87,13 @@ public class DualAuthSystemService {
         dualAuthSystem.setCreatedBy(creatorId);
         dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
         dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
-
         dualAuthSystemRepository.save(dualAuthSystem);
 
         return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
     }
 
     public boolean approveUser(Long id) {
-        Long reviewerId= getCurrentUserId();
+        Long reviewerId=getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.APPROVED);
     }
 
@@ -158,6 +157,104 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
+/*
+    public boolean activateUser(Long userId) {
+        Long creatorId = getCurrentUserId();
+        return userRepository.findById(userId).map(user -> {
+            String oldUserData = convertToJson(user);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("User");
+            dualAuthSystem.setOldData(oldUserData);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean approveActivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            user.setStatus(User.Status.ACTIVATED);
+            userRepository.save(user);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean rejectActivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            user.setStatus(User.Status.DEACTIVATED);
+            userRepository.save(user);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.REJECTED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+ */
+public boolean activateUser(Long userId) {
+    Long creatorId = getCurrentUserId();
+    return userRepository.findById(userId).map(user -> {
+        String userJson = convertToJson(user);
+
+        DualAuthSystem dualAuthSystem = new DualAuthSystem();
+        dualAuthSystem.setEntity("User");
+        dualAuthSystem.setOldData(userJson);
+        dualAuthSystem.setCreatedBy(creatorId);
+        dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+        dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
+
+        dualAuthSystemRepository.save(dualAuthSystem);
+
+        return true;
+    }).orElse(false);
+}
+
+    public boolean approveActivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            user.setStatus(User.Status.ACTIVATED);
+            userRepository.save(user);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean approveDeactivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            user.setStatus(User.Status.DEACTIVATED);
+            userRepository.save(user);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
 
 
     private String convertToJson(Object object) {
