@@ -32,6 +32,12 @@ public class User implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(nullable = false)
+    private boolean locked = true;
+
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     @Override
     @JsonIgnore
@@ -71,8 +77,7 @@ public class User implements UserDetails {
         return true;
     }
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+
 
 
     public enum Status {
