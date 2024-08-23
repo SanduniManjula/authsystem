@@ -2,6 +2,7 @@ package authsystem.services;
 
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.User;
+import authsystem.exceptions.UserPendingApprovalException;
 import authsystem.model.UserDto;
 import authsystem.repository.DualAuthSystemRepository;
 import authsystem.repository.UserRepository;
@@ -77,8 +78,18 @@ public class DualAuthSystemService {
 
         User existingUser = existingUserOpt.orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        if (existingUser.isLocked()) {
+            throw new UserPendingApprovalException("User update is not allowed while the account is in a pending approval state.");
+        }
+
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            String encryptedPassword = passwordEncoder.encode(updatedUser.getPassword());
+            updatedUser.setPassword(encryptedPassword);
+        }
+
         String oldUserJson = convertToJson(existingUser);
         String newUserJson = convertToJson(updatedUser);
+
 
         DualAuthSystem dualAuthSystem = new DualAuthSystem();
         dualAuthSystem.setEntity("User");

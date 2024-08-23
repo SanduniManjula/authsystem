@@ -87,38 +87,6 @@ public class UserController {
                 ResponseEntity.ok(new ApiResponse<>(false, "User not found or already processed", null));
     }
 
-/*
-    @PostMapping("/activate/{userId}")
-    public ResponseEntity<String> activateUser(@PathVariable Long userId) {
-        boolean activated = dualAuthSystemService.activateUser(userId);
-        if (activated) {
-            return ResponseEntity.ok("User activation request submitted successfully and is pending approval.");
-        } else {
-            return ResponseEntity.badRequest().body("User not found or activation request failed.");
-        }
-    }
-
-    @PostMapping("/approveActivation/{id}")
-    public ResponseEntity<String> approveActivation(@PathVariable Long id) {
-        boolean approved = dualAuthSystemService.approveActivation(id);
-        if (approved) {
-            return ResponseEntity.ok("User activation approved. The user is now activated.");
-        } else {
-            return ResponseEntity.badRequest().body("Activation approval failed. Record not found or not in pending status.");
-        }
-    }
-
-    @PostMapping("/rejectActivation/{id}")
-    public ResponseEntity<String> rejectActivation(@PathVariable Long id) {
-        boolean rejected = dualAuthSystemService.rejectActivation(id);
-        if (rejected) {
-            return ResponseEntity.ok("User activation rejected. The user is now deactivated.");
-        } else {
-            return ResponseEntity.badRequest().body("Activation rejection failed. Record not found or not in pending status.");
-        }
-    }
-
- */
 @PostMapping("/activate/{userId}")
 public ResponseEntity<ApiResponse<String>> activateUser(@PathVariable Long userId) {
     boolean activated = dualAuthSystemService.activateUser(userId);
