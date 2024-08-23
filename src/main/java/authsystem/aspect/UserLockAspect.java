@@ -24,7 +24,7 @@ public class UserLockAspect {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @AfterReturning(pointcut = "execution(* authsystem.services.DualAuthSystemService.approve*(..)) && args(id)", returning = "result")
+    @AfterReturning(pointcut = "@annotation(authsystem.annotation.UnlockUserAfterApproval) && args(id)", returning = "result")
     public void unlockUserAfterApproval(Long id, boolean result) {
         if (result) {
             dualAuthSystemRepository.findById(id).ifPresent(dualAuthSystem -> {

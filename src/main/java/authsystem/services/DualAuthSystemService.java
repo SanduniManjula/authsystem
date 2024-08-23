@@ -1,5 +1,6 @@
 package authsystem.services;
 
+import authsystem.annotation.UnlockUserAfterApproval;
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.User;
 import authsystem.exceptions.UserPendingApprovalException;
@@ -78,7 +79,7 @@ public class DualAuthSystemService {
 
         User existingUser = existingUserOpt.orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        if (existingUser.isLocked()) {
+        if(existingUser.isLocked()){
             throw new UserPendingApprovalException("User update is not allowed while the account is in a pending approval state.");
         }
 
@@ -89,7 +90,6 @@ public class DualAuthSystemService {
 
         String oldUserJson = convertToJson(existingUser);
         String newUserJson = convertToJson(updatedUser);
-
 
         DualAuthSystem dualAuthSystem = new DualAuthSystem();
         dualAuthSystem.setEntity("User");
@@ -107,6 +107,7 @@ public class DualAuthSystemService {
         return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
     }
 
+    @UnlockUserAfterApproval
     public boolean approveUser(Long id) {
         Long reviewerId = getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.APPROVED);
