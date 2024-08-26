@@ -1,5 +1,6 @@
 package authsystem.services;
 
+import authsystem.annotation.CheckUserLocked;
 import authsystem.annotation.UnlockUserAfterApproval;
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.User;
@@ -72,16 +73,18 @@ public class DualAuthSystemService {
 
         return user.getId();
     }
-
+    @CheckUserLocked
     public UserDto updateUser(Long id, User updatedUser) {
         Long creatorId = getCurrentUserId();
         Optional<User> existingUserOpt = userRepository.findById(id);
 
         User existingUser = existingUserOpt.orElseThrow(() -> new EntityNotFoundException("User not found"));
-
+    /*
         if(existingUser.isLocked()){
             throw new UserPendingApprovalException("User update is not allowed while the account is in a pending approval state.");
         }
+
+     */
 
         if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
             String encryptedPassword = passwordEncoder.encode(updatedUser.getPassword());
@@ -158,13 +161,15 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+    @CheckUserLocked
     public boolean deleteUser(Long userId) {
         Long creatorId = getCurrentUserId();
-        return userRepository.findById(userId).map(user -> {
+       return userRepository.findById(userId).map(user -> {
             user.setLocked(true);
+            userRepository.save(user);
             String oldUserData = convertToJson(user);
 
-            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+        DualAuthSystem dualAuthSystem = new DualAuthSystem();
             dualAuthSystem.setEntity("User");
             dualAuthSystem.setOldData(oldUserData);
             dualAuthSystem.setCreatedBy(creatorId);
