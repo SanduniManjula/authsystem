@@ -77,7 +77,8 @@ public class User implements UserDetails {
         return true;
     }
 
-
+    public boolean isActivated() { return true;
+    }
 
 
     public enum Status {

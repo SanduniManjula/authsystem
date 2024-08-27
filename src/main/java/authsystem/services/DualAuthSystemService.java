@@ -1,10 +1,11 @@
 package authsystem.services;
 
+import authsystem.annotation.CheckBeforeActivation;
+import authsystem.annotation.CheckBeforeDeactivation;
 import authsystem.annotation.CheckUserLocked;
 import authsystem.annotation.UnlockUserAfterApproval;
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.User;
-import authsystem.exceptions.UserPendingApprovalException;
 import authsystem.model.UserDto;
 import authsystem.repository.DualAuthSystemRepository;
 import authsystem.repository.UserRepository;
@@ -208,10 +209,18 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-
+    @CheckBeforeActivation
     public boolean activateUser(Long userId) {
         Long creatorId = getCurrentUserId();
+
         return userRepository.findById(userId).map(user -> {
+
+            if (user.getStatus() == User.Status.ACTIVATED) {
+                log.info("User {} is already activated.", userId);
+
+                return false;
+            }
+
             String userJson = convertToJson(user);
 
             DualAuthSystem dualAuthSystem = new DualAuthSystem();
@@ -219,7 +228,34 @@ public class DualAuthSystemService {
             dualAuthSystem.setOldData(userJson);
             dualAuthSystem.setCreatedBy(creatorId);
             dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
-            dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
+            dualAuthSystem.setAction(DualAuthSystem.Action.ACTIVATE);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+    @CheckBeforeDeactivation
+    public boolean deactivateUser(Long userId) {
+        Long creatorId = getCurrentUserId();
+
+        return userRepository.findById(userId).map(user -> {
+
+            if (user.getStatus() == User.Status.DEACTIVATED) {
+                log.info("User {} is already deactivated.", userId);
+
+                return false;
+            }
+
+
+            String userJson = convertToJson(user);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("User");
+            dualAuthSystem.setOldData(userJson);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.DEACTIVATE);
 
             dualAuthSystemRepository.save(dualAuthSystem);
 
@@ -227,10 +263,21 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+
+
+
     public boolean approveActivation(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
             User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+
+            if (user.getStatus() == User.Status.ACTIVATED) {
+                log.info("User {} is already activated.", user.getId());
+                return false;
+            }
+
+
+
             user.setStatus(User.Status.ACTIVATED);
             userRepository.save(user);
 
@@ -242,10 +289,15 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+
     public boolean approveDeactivation(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
             User user = convertFromJson(dualAuthSystem.getOldData(), User.class);
+            if (user.getStatus() == User.Status.DEACTIVATED) {
+                log.info("User {} is already deactivated.", user.getId());
+                return false;
+            }
             user.setStatus(User.Status.DEACTIVATED);
             userRepository.save(user);
 
@@ -256,6 +308,7 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
+
 
     private String convertToJson(Object object) {
         try {
