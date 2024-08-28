@@ -108,29 +108,6 @@ public ResponseEntity<ApiResponse<String>> activateUser(@PathVariable Long userI
     }
 
 
-    /*
-@PostMapping("/approveActivation/{id}")
-public ResponseEntity<ApiResponse<String>> approveActivation(@PathVariable Long id) {
-    boolean approved = dualAuthSystemService.approveActivation(id);
-    if (approved) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "User activation approved. The user is now activated.", null));
-    } else {
-        return ResponseEntity.ok(new ApiResponse<>(false, "Activation approval failed. Record not found or not in pending status.", null));
-    }
-}
-
-
-    @PostMapping("/approveDeactivation/{id}")
-    public ResponseEntity<ApiResponse<String>> approveDeactivation(@PathVariable Long id) {
-        boolean deactivated = dualAuthSystemService.approveDeactivation(id);
-        if (deactivated) {
-            return ResponseEntity.ok(new ApiResponse<>(true, "User deactivation approved. The user is now deactivated.", null));
-        } else {
-            return ResponseEntity.ok(new ApiResponse<>(false, "Deactivation approval failed. Record not found or not in pending status.", null));
-        }
-    }
-
- */
 @PostMapping("/approveActivation/{id}")
 public ResponseEntity<ApiResponse<String>> approveActivation(@PathVariable Long id) {
     boolean result = dualAuthSystemService.approveActivation(id);

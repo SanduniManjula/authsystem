@@ -5,9 +5,14 @@ import authsystem.annotation.CheckBeforeDeactivation;
 import authsystem.annotation.CheckUserLocked;
 import authsystem.annotation.UnlockUserAfterApproval;
 import authsystem.entity.DualAuthSystem;
+import authsystem.entity.Permission;
+import authsystem.entity.Role;
 import authsystem.entity.User;
+import authsystem.model.RoleDto;
 import authsystem.model.UserDto;
 import authsystem.repository.DualAuthSystemRepository;
+import authsystem.repository.PermissionRepository;
+import authsystem.repository.RoleRepository;
 import authsystem.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +24,8 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -31,11 +38,18 @@ public class DualAuthSystemService {
     private UserRepository userRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private ObjectMapper objectMapper;
 
+    /// User///////////
     public UserDto createPendingUser(User user) {
         Long creatorId = getCurrentUserId();
         log.info("Creating pending user: {} with creatorId: {}", user.getUsername(), creatorId);
@@ -310,6 +324,166 @@ public class DualAuthSystemService {
     }
 
 
+
+
+
+    //Role///////
+    public RoleDto createPendingRole(RoleDto roleDto) {
+        Long creatorId = getCurrentUserId();
+        log.info("Creating pending role: {} with creatorId: {}", roleDto.getName(), creatorId);
+
+        Role role = convertToEntity(roleDto);
+        role.setActivated(false);
+
+        String newRoleJson = convertToJson(roleDto);
+
+        DualAuthSystem dualAuthSystem = new DualAuthSystem();
+        dualAuthSystem.setEntity("Role");
+        dualAuthSystem.setNewData(newRoleJson);
+        dualAuthSystem.setCreatedBy(creatorId);
+        dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+        dualAuthSystem.setAction(DualAuthSystem.Action.CREATE);
+
+        dualAuthSystemRepository.save(dualAuthSystem);
+
+        return roleDto;
+    }
+
+    public RoleDto updateRole(Long id, RoleDto updatedRoleDto) {
+        Long creatorId = getCurrentUserId();
+        Optional<Role> existingRoleOpt = roleRepository.findById(id);
+
+        Role existingRole = existingRoleOpt.orElseThrow(() -> new EntityNotFoundException("Role not found"));
+
+        RoleDto existingRoleDto = convertToDto(existingRole);
+        String oldRoleJson = convertToJson(existingRoleDto);
+        String newRoleJson = convertToJson(updatedRoleDto);
+
+        DualAuthSystem dualAuthSystem = new DualAuthSystem();
+        dualAuthSystem.setEntity("Role");
+        dualAuthSystem.setOldData(oldRoleJson);
+        dualAuthSystem.setNewData(newRoleJson);
+        dualAuthSystem.setCreatedBy(creatorId);
+        dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+        dualAuthSystem.setAction(DualAuthSystem.Action.UPDATE);
+
+        dualAuthSystemRepository.save(dualAuthSystem);
+
+        Role updatedRole = convertToEntity(updatedRoleDto);
+        updatedRole.setActivated(false);
+
+        return convertToDto(roleRepository.save(updatedRole));
+    }
+
+    public boolean approveRole(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return processRole(id, reviewerId, DualAuthSystem.Status.APPROVED);
+    }
+
+    public boolean rejectRole(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return processRole(id, reviewerId, DualAuthSystem.Status.REJECTED);
+    }
+
+    private boolean processRole(Long id, Long reviewerId, DualAuthSystem.Status status) {
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            RoleDto roleDto = convertFromJson(dualAuthSystem.getNewData(), RoleDto.class);
+
+            if (status == DualAuthSystem.Status.APPROVED) {
+                Role role = convertToEntity(roleDto);
+                role.setActivated(true);
+                roleRepository.save(role);
+            } else if (status == DualAuthSystem.Status.REJECTED) {
+                Role role = convertToEntity(roleDto);
+                roleRepository.deleteById(role.getId());
+            }
+
+            dualAuthSystem.setStatus(status);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean deleteRole(Long roleId) {
+        Long creatorId = getCurrentUserId();
+        return roleRepository.findById(roleId).map(role -> {
+            RoleDto roleDto = convertToDto(role);
+           // roleRepository.deleteById(roleId);
+
+            String oldRoleData = convertToJson(roleDto);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("Role");
+            dualAuthSystem.setOldData(oldRoleData);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.DELETE);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean approveRoleDeletion(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            RoleDto roleDto = convertFromJson(dualAuthSystem.getOldData(), RoleDto.class);
+            Role role = convertToEntity(roleDto);
+            roleRepository.deleteById(role.getId());
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean rejectRoleDeletion(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            RoleDto roleDto = convertFromJson(dualAuthSystem.getOldData(), RoleDto.class);
+            Role role = convertToEntity(roleDto);
+            roleRepository.save(role); // Restore the role if needed
+            dualAuthSystem.setStatus(DualAuthSystem.Status.REJECTED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+            return true;
+        }).orElse(false);
+    }
+
+
+    private Role convertToEntity(RoleDto roleDto) {
+        Role role = new Role();
+        role.setId(roleDto.getId());
+        role.setName(roleDto.getName());
+        role.setActivated(roleDto.isActivated());
+        Set<Permission> permissions = roleDto.getPermissionIds().stream()
+                .map(permissionId -> {
+                    Permission permission = permissionRepository.findById(permissionId)
+                            .orElseThrow(() -> new EntityNotFoundException("Permission not found with id: " + permissionId));
+                    return permission;
+                })
+                .collect(Collectors.toSet());
+        role.setPermissions(permissions);
+        return role;
+    }
+
+    private RoleDto convertToDto(Role role) {
+        Set<Long> permissionIds = role.getPermissions().stream()
+                .map(Permission::getId)
+                .collect(Collectors.toSet());
+
+        return new RoleDto(
+                role.getId(),
+                role.getName(),
+                role.isActivated(),
+                permissionIds
+        );
+    }
+
+
+
     private String convertToJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);
@@ -325,4 +499,5 @@ public class DualAuthSystemService {
             throw new RuntimeException("Failed to convert from JSON", e);
         }
     }
+
 }
