@@ -12,7 +12,7 @@ import java.util.Set;
 public class RoleDto {
     private Long id;
     private String name;
-    private boolean activated;
+   // private boolean activated;
     private Set<Long> permissionIds;
 
     public Set<Long> getPermissionIds() {

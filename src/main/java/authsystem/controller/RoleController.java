@@ -85,7 +85,7 @@ public class RoleController {
     }
 
 
-    /*
+
     @PostMapping("/activate-role/{id}")
     public ResponseEntity<ApiResponse<String>> activateRole(@PathVariable Long id) {
         boolean activated = dualAuthSystemService.activateRole(id);
@@ -120,5 +120,5 @@ public class RoleController {
                 : ResponseEntity.ok(new ApiResponse<>(false, "Role is already deactivated or not found", null));
     }
 
-     */
+
 }

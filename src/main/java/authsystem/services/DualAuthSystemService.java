@@ -1,9 +1,6 @@
 package authsystem.services;
 
-import authsystem.annotation.CheckBeforeActivation;
-import authsystem.annotation.CheckBeforeDeactivation;
-import authsystem.annotation.CheckUserLocked;
-import authsystem.annotation.UnlockUserAfterApproval;
+import authsystem.annotation.*;
 import authsystem.entity.DualAuthSystem;
 import authsystem.entity.Permission;
 import authsystem.entity.Role;
@@ -278,8 +275,6 @@ public class DualAuthSystemService {
     }
 
 
-
-
     public boolean approveActivation(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -289,7 +284,6 @@ public class DualAuthSystemService {
                 log.info("User {} is already activated.", user.getId());
                 return false;
             }
-
 
 
             user.setStatus(User.Status.ACTIVATED);
@@ -331,9 +325,8 @@ public class DualAuthSystemService {
     public RoleDto createPendingRole(RoleDto roleDto) {
         Long creatorId = getCurrentUserId();
         log.info("Creating pending role: {} with creatorId: {}", roleDto.getName(), creatorId);
-
-        Role role = convertToEntity(roleDto);
-        role.setActivated(false);
+       // Role role = convertToEntity(roleDto);
+       // role.setActivated(false);
 
         String newRoleJson = convertToJson(roleDto);
 
@@ -348,13 +341,15 @@ public class DualAuthSystemService {
 
         return roleDto;
     }
-
+    @CheckRoleLocked
     public RoleDto updateRole(Long id, RoleDto updatedRoleDto) {
         Long creatorId = getCurrentUserId();
         Optional<Role> existingRoleOpt = roleRepository.findById(id);
 
         Role existingRole = existingRoleOpt.orElseThrow(() -> new EntityNotFoundException("Role not found"));
 
+        existingRole.setLocked(true);
+        roleRepository.save(existingRole);
         RoleDto existingRoleDto = convertToDto(existingRole);
         String oldRoleJson = convertToJson(existingRoleDto);
         String newRoleJson = convertToJson(updatedRoleDto);
@@ -370,16 +365,16 @@ public class DualAuthSystemService {
         dualAuthSystemRepository.save(dualAuthSystem);
 
         Role updatedRole = convertToEntity(updatedRoleDto);
-        updatedRole.setActivated(false);
+        //updatedRole.setActivated(false);
 
         return convertToDto(roleRepository.save(updatedRole));
     }
-
+    @UnlockRoleAfterApproval
     public boolean approveRole(Long id) {
         Long reviewerId = getCurrentUserId();
         return processRole(id, reviewerId, DualAuthSystem.Status.APPROVED);
     }
-
+    @UnlockRoleAfterApproval
     public boolean rejectRole(Long id) {
         Long reviewerId = getCurrentUserId();
         return processRole(id, reviewerId, DualAuthSystem.Status.REJECTED);
@@ -391,10 +386,12 @@ public class DualAuthSystemService {
 
             if (status == DualAuthSystem.Status.APPROVED) {
                 Role role = convertToEntity(roleDto);
-                role.setActivated(true);
+              //  role.setActivated(true);
+                role.setLocked(false);
                 roleRepository.save(role);
             } else if (status == DualAuthSystem.Status.REJECTED) {
                 Role role = convertToEntity(roleDto);
+                role.setLocked(false);
                 roleRepository.deleteById(role.getId());
             }
 
@@ -405,12 +402,14 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+    @CheckRoleLocked
     public boolean deleteRole(Long roleId) {
         Long creatorId = getCurrentUserId();
         return roleRepository.findById(roleId).map(role -> {
             RoleDto roleDto = convertToDto(role);
            // roleRepository.deleteById(roleId);
-
+            role.setLocked(true);
+            roleRepository.save(role);
             String oldRoleData = convertToJson(roleDto);
 
             DualAuthSystem dualAuthSystem = new DualAuthSystem();
@@ -426,6 +425,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+    @UnlockRoleAfterApproval
     public boolean approveRoleDeletion(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -439,12 +439,14 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+    @UnlockRoleAfterApproval
     public boolean rejectRoleDeletion(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
             RoleDto roleDto = convertFromJson(dualAuthSystem.getOldData(), RoleDto.class);
             Role role = convertToEntity(roleDto);
-            roleRepository.save(role); // Restore the role if needed
+            role.setLocked(false);
+            roleRepository.save(role);
             dualAuthSystem.setStatus(DualAuthSystem.Status.REJECTED);
             dualAuthSystem.setReviewedBy(reviewerId);
             dualAuthSystemRepository.save(dualAuthSystem);
@@ -452,12 +454,113 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
+    @ActivateRole
+    public boolean activateRole(Long roleId) {
+        Long creatorId = getCurrentUserId();
+
+        return roleRepository.findById(roleId).map(role -> {
+
+            if (role.getStatus() == Role.Status.ACTIVATED) {
+                log.info("Role {} is already activated.", roleId);
+                return false;
+            }
+
+            String roleJson = convertToJson(role);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("Role");
+            dualAuthSystem.setOldData(roleJson);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.ACTIVATE);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+
+    @DeactivateRole
+    public boolean deactivateRole(Long roleId) {
+        Long creatorId = getCurrentUserId();
+
+        return roleRepository.findById(roleId).map(role -> {
+
+            if (role.getStatus() == Role.Status.DEACTIVATED) {
+                log.info("Role {} is already deactivated.", roleId);
+                return false;
+            }
+
+            String roleJson = convertToJson(role);
+
+            DualAuthSystem dualAuthSystem = new DualAuthSystem();
+            dualAuthSystem.setEntity("Role");
+            dualAuthSystem.setOldData(roleJson);
+            dualAuthSystem.setCreatedBy(creatorId);
+            dualAuthSystem.setStatus(DualAuthSystem.Status.PENDING);
+            dualAuthSystem.setAction(DualAuthSystem.Action.DEACTIVATE);
+
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    // Method to approve role activation
+    public boolean approveRoleActivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            Role role = convertFromJson(dualAuthSystem.getOldData(), Role.class);
+
+            if (role.getStatus() == Role.Status.ACTIVATED) {
+                log.info("Role {} is already activated.", role.getId());
+                return false;
+            }
+
+            role.setStatus(Role.Status.ACTIVATED);
+            role.setLocked(false); // Ensure role is unlocked upon activation
+            roleRepository.save(role);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+    // Method to approve role deactivation
+    public boolean approveRoleDeactivation(Long id) {
+        Long reviewerId = getCurrentUserId();
+        return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
+            Role role = convertFromJson(dualAuthSystem.getOldData(), Role.class);
+
+            if (role.getStatus() == Role.Status.DEACTIVATED) {
+                log.info("Role {} is already deactivated.", role.getId());
+                return false;
+            }
+
+            role.setStatus(Role.Status.DEACTIVATED);
+            role.setLocked(false);
+            roleRepository.save(role);
+
+            dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
+            dualAuthSystem.setReviewedBy(reviewerId);
+            dualAuthSystemRepository.save(dualAuthSystem);
+
+            return true;
+        }).orElse(false);
+    }
+
+
+
 
     private Role convertToEntity(RoleDto roleDto) {
         Role role = new Role();
         role.setId(roleDto.getId());
         role.setName(roleDto.getName());
-        role.setActivated(roleDto.isActivated());
+      //  role.setActivated(roleDto.isActivated());
         Set<Permission> permissions = roleDto.getPermissionIds().stream()
                 .map(permissionId -> {
                     Permission permission = permissionRepository.findById(permissionId)
@@ -477,7 +580,7 @@ public class DualAuthSystemService {
         return new RoleDto(
                 role.getId(),
                 role.getName(),
-                role.isActivated(),
+               // role.isActivated(),
                 permissionIds
         );
     }

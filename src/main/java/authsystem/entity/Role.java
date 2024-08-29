@@ -1,10 +1,8 @@
 package authsystem.entity;
-
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,8 +31,13 @@ public class Role {
     )
     private Set<Permission> permissions = new HashSet<>();
 
-    @Column(nullable = false)
+   /* @Column(nullable = false)
     private boolean activated;
+
+    */
+
+    @Enumerated(EnumType.STRING)
+    private Role.Status status;
 
     @Column(nullable = false)
     private boolean locked = true;
@@ -43,7 +46,13 @@ public class Role {
     public Role(String name, Set<Permission> permissions, boolean activated) {
         this.name = name;
         this.permissions = permissions;
-        this.activated = activated;
+       // this.activated = activated;
+    }
+
+
+    public enum Status {
+        ACTIVATED,
+        DEACTIVATED
     }
 
 
