@@ -191,7 +191,6 @@ public class DualAuthSystemService {
             dualAuthSystemRepository.save(dualAuthSystem);
 
 
-
             return true;
         }).orElse(false);
     }
@@ -347,9 +346,15 @@ public class DualAuthSystemService {
         Optional<Role> existingRoleOpt = roleRepository.findById(id);
 
         Role existingRole = existingRoleOpt.orElseThrow(() -> new EntityNotFoundException("Role not found"));
+       if (existingRole.isLocked()) {
+            throw new IllegalStateException("Role is currently locked and cannot be updated.");
+        }
+
 
         existingRole.setLocked(true);
         roleRepository.save(existingRole);
+
+
         RoleDto existingRoleDto = convertToDto(existingRole);
         String oldRoleJson = convertToJson(existingRoleDto);
         String newRoleJson = convertToJson(updatedRoleDto);
@@ -364,10 +369,11 @@ public class DualAuthSystemService {
 
         dualAuthSystemRepository.save(dualAuthSystem);
 
-        Role updatedRole = convertToEntity(updatedRoleDto);
-        //updatedRole.setActivated(false);
+      //  Role updatedRole = convertToEntity(updatedRoleDto);
+       // roleRepository.save(updatedRole);
 
-        return convertToDto(roleRepository.save(updatedRole));
+      //  return convertToDto(roleRepository.save(updatedRole));
+        return updatedRoleDto;
     }
     @UnlockRoleAfterApproval
     public boolean approveRole(Long id) {
@@ -480,7 +486,6 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-
     @DeactivateRole
     public boolean deactivateRole(Long roleId) {
         Long creatorId = getCurrentUserId();
@@ -507,7 +512,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    // Method to approve role activation
+
     public boolean approveRoleActivation(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -519,7 +524,7 @@ public class DualAuthSystemService {
             }
 
             role.setStatus(Role.Status.ACTIVATED);
-            role.setLocked(false); // Ensure role is unlocked upon activation
+            role.setLocked(false);
             roleRepository.save(role);
 
             dualAuthSystem.setStatus(DualAuthSystem.Status.APPROVED);
@@ -530,7 +535,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    // Method to approve role deactivation
+
     public boolean approveRoleDeactivation(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -552,7 +557,6 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-
 
 
 
