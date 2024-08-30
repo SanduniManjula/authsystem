@@ -120,5 +120,4 @@ public class RoleController {
                 : ResponseEntity.ok(new ApiResponse<>(false, "Role is already deactivated or not found", null));
     }
 
-
 }

@@ -85,7 +85,7 @@ public class DualAuthSystemService {
 
         return user.getId();
     }
-    @CheckUserLocked
+    @CheckLockStatus(entityType = "User")
     public UserDto updateUser(Long id, User updatedUser) {
         Long creatorId = getCurrentUserId();
         Optional<User> existingUserOpt = userRepository.findById(id);
@@ -122,12 +122,12 @@ public class DualAuthSystemService {
         return new UserDto(updatedUser.getId(), updatedUser.getUsername(), updatedUser.getRole().getId());
     }
 
-    @UnlockUserAfterApproval
+    @UnlockAfterApprovalOrRejection(entityType = "User")
     public boolean approveUser(Long id) {
         Long reviewerId = getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.APPROVED);
     }
-
+    @UnlockAfterApprovalOrRejection(entityType = "User")
     public boolean rejectUser(Long id) {
         Long reviewerId = getCurrentUserId();
         return processUser(id, reviewerId, DualAuthSystem.Status.REJECTED);
@@ -173,7 +173,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    @CheckUserLocked
+    @CheckLockStatus(entityType = "User")
     public boolean deleteUser(Long userId) {
         Long creatorId = getCurrentUserId();
        return userRepository.findById(userId).map(user -> {
@@ -219,7 +219,7 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-    @CheckBeforeActivation
+    @CheckActivationStatus(entityType = "User", action = "activate")
     public boolean activateUser(Long userId) {
         Long creatorId = getCurrentUserId();
 
@@ -245,7 +245,7 @@ public class DualAuthSystemService {
             return true;
         }).orElse(false);
     }
-    @CheckBeforeDeactivation
+    @CheckActivationStatus(entityType = "User", action = "deactivate")
     public boolean deactivateUser(Long userId) {
         Long creatorId = getCurrentUserId();
 
@@ -340,7 +340,7 @@ public class DualAuthSystemService {
 
         return roleDto;
     }
-    @CheckRoleLocked
+    @CheckLockStatus(entityType = "Role")
     public RoleDto updateRole(Long id, RoleDto updatedRoleDto) {
         Long creatorId = getCurrentUserId();
         Optional<Role> existingRoleOpt = roleRepository.findById(id);
@@ -375,12 +375,12 @@ public class DualAuthSystemService {
       //  return convertToDto(roleRepository.save(updatedRole));
         return updatedRoleDto;
     }
-    @UnlockRoleAfterApproval
+    @UnlockAfterApprovalOrRejection(entityType = "Role")
     public boolean approveRole(Long id) {
         Long reviewerId = getCurrentUserId();
         return processRole(id, reviewerId, DualAuthSystem.Status.APPROVED);
     }
-    @UnlockRoleAfterApproval
+    @UnlockAfterApprovalOrRejection(entityType = "Role")
     public boolean rejectRole(Long id) {
         Long reviewerId = getCurrentUserId();
         return processRole(id, reviewerId, DualAuthSystem.Status.REJECTED);
@@ -408,7 +408,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    @CheckRoleLocked
+    @CheckLockStatus(entityType = "Role")
     public boolean deleteRole(Long roleId) {
         Long creatorId = getCurrentUserId();
         return roleRepository.findById(roleId).map(role -> {
@@ -431,7 +431,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    @UnlockRoleAfterApproval
+    @UnlockAfterApprovalOrRejection(entityType = "Role")
     public boolean approveRoleDeletion(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -445,7 +445,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    @UnlockRoleAfterApproval
+    @UnlockAfterApprovalOrRejection(entityType = "Role")
     public boolean rejectRoleDeletion(Long id) {
         Long reviewerId = getCurrentUserId();
         return dualAuthSystemRepository.findByIdAndStatus(id, DualAuthSystem.Status.PENDING).map(dualAuthSystem -> {
@@ -486,7 +486,7 @@ public class DualAuthSystemService {
         }).orElse(false);
     }
 
-    @DeactivateRole
+    @CheckActivationStatus(entityType = "User", action = "deactivate")
     public boolean deactivateRole(Long roleId) {
         Long creatorId = getCurrentUserId();
 
