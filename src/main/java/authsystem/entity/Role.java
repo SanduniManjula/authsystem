@@ -3,7 +3,11 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +37,6 @@ public class Role {
 
    /* @Column(nullable = false)
     private boolean activated;
-
     */
 
     @Enumerated(EnumType.STRING)
@@ -42,6 +45,13 @@ public class Role {
     @Column(nullable = false)
     private boolean locked = true;
 
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
+
 
     public Role(String name, Set<Permission> permissions, boolean activated) {
         this.name = name;
@@ -49,11 +59,9 @@ public class Role {
        // this.activated = activated;
     }
 
-
     public enum Status {
         ACTIVATED,
         DEACTIVATED
     }
-
 
 }

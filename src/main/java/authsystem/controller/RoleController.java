@@ -4,13 +4,19 @@ import authsystem.model.RoleDto;
 import authsystem.model.RoleSearchCriteria;
 import authsystem.model.response.ApiResponse;
 import authsystem.services.DualAuthSystemService;
+import authsystem.services.ReportService;
 import authsystem.services.RoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/roles")
@@ -19,6 +25,9 @@ public class RoleController {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private ReportService reportService;
 
     @Autowired
     private DualAuthSystemService dualAuthSystemService;
@@ -118,6 +127,24 @@ public class RoleController {
         boolean result = dualAuthSystemService.approveRoleDeactivation(id);
         return result ? ResponseEntity.ok(new ApiResponse<>(true, "Role deactivation approved", null))
                 : ResponseEntity.ok(new ApiResponse<>(false, "Role is already deactivated or not found", null));
+    }
+
+
+    @GetMapping("/report")
+    public ResponseEntity<byte[]> generateRoleReport(
+            @RequestParam("fromDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam("toDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @RequestParam("reportType") String reportType) {
+
+        byte[] reportData = reportService.generateRoleReport(fromDate, toDate, reportType.trim());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=roles_report." + reportType.trim());
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reportData);
     }
 
 }
