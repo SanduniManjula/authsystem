@@ -263,4 +263,5 @@ public class ReportService {
             throw new RuntimeException("Failed to generate User PDF report", e);
         }
     }
+
 }

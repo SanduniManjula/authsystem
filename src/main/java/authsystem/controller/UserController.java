@@ -130,6 +130,7 @@ public ResponseEntity<ApiResponse<String>> approveActivation(@PathVariable Long 
         return result ? ResponseEntity.ok(new ApiResponse<>(true, "User deactivation approved", null))
                 : ResponseEntity.ok(new ApiResponse<>(false, "User is already deactivated or not found", null));
     }
+
     @GetMapping("/report")
     public ResponseEntity<byte[]> generateUserReport(
             @RequestParam("fromDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
@@ -146,6 +147,8 @@ public ResponseEntity<ApiResponse<String>> approveActivation(@PathVariable Long 
                 .headers(headers)
                 .body(reportData);
     }
+
+
 
 
 }
