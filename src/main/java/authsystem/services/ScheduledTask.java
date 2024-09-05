@@ -46,5 +46,6 @@ public class ScheduledTask {
         );
 
         log.info("Email sent with daily summary report.");
+
     }
 }
